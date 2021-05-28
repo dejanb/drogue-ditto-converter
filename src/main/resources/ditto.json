@@ -1,0 +1,9 @@
+{
+    "features": {
+        "temp": {
+            "properties": {
+                "value": 19.0
+            }
+        }
+    }
+}

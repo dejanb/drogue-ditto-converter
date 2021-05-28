@@ -1,0 +1,65 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: ditto-converter
+  labels:
+    app.kubernetes.io/name: digital-twin
+    app.kubernetes.io/part-of: digital-twin
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/scaleToZeroPodRetentionPeriod: "5m"
+    spec:
+      containers:
+        - image: quay.io/dejanb/drogue-ditto-converter-jvm
+          imagePullPolicy: Always
+          env:
+            - name: QUARKUS_LOG_LEVEL
+              value: DEBUG
+          resources:
+            requests:
+              memory: 128Mi
+            limits:
+              memory: 128Mi
+---
+apiVersion: sources.knative.dev/v1alpha1
+kind: KafkaSource
+metadata:
+  name: ditto-converter-kafka-source
+  labels:
+    app.kubernetes.io/part-of: digital-twin
+spec:
+  consumerGroup: ditto-converter
+  bootstrapServers:
+    - kafka-eventing-kafka-bootstrap.knative-eventing.svc:9092
+  topics:
+    - knative-messaging-kafka.drogue-iot.iot-channel
+  sink:
+    ref:
+      apiVersion: flows.knative.dev/v1
+      kind: Sequence
+      name: ditto-converter
+---
+apiVersion: flows.knative.dev/v1
+kind: Sequence
+metadata:
+  name: ditto-converter
+  labels:
+    app.kubernetes.io/name: digital-twin
+    app.kubernetes.io/part-of: digital-twin
+spec:
+  channelTemplate:
+    apiVersion: messaging.knative.dev/v1alpha1
+    kind: KafkaChannel
+    spec:
+      numPartitions: 1
+      replicationFactor: 1
+  steps:
+    - ref:
+        apiVersion: serving.knative.dev/v1
+        kind: Service
+        name: ditto-converter
+  reply:
+    uri: http://ditto:ditto@ditto-nginx.drogue-iot.svc.cluster.local:8080/api/2/cloudevents
