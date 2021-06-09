@@ -1,6 +1,7 @@
 # drogue-ditto-converter project
 
-!! This project is no longer maintained. Go to [https://github.com/drogue-iot/drogue-ditto-converter]
+:bangbang: | This project is no longer maintained. Go to [https://github.com/drogue-iot/drogue-ditto-converter]
+:---: | :---
 
 
 This is a simple [Knative](https://knative.dev/) event payload converter from Drogue Cloud to Eclipse Ditto.
